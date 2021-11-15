@@ -54,6 +54,8 @@ dev_dependencies:
   cloud_firestore: ^2.5.4
   flutter_sound: ^8.4.2
   permission_handler: ^8.2.6
+  syncfusion_flutter_sliders: ^19.3.48
+  audio_wave: ^0.1.2
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
@@ -77,6 +79,11 @@ flutter:
     - assets/svg_files/paper.svg
     - assets/svg_files/profile.svg
     - assets/svg_files/voice.svg
+    - assets/svg_files/delete.svg
+    - assets/svg_files/upload.svg
+    - assets/svg_files/paper_download.svg
+    - assets/svg_files/fast_forward.svg
+    - assets/svg_files/rewind.svg
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

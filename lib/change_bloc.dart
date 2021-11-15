@@ -8,24 +8,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rxdart/rxdart.dart';
 
 class ChangeBloc {
-
-
   UserInformation? userProfile;
 
   TextEditingController nameController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
   final StreamController<String> _photoController = BehaviorSubject();
 
-
-  Stream<String> get photoStream =>_photoController.stream;
-
+  Stream<String> get photoStream => _photoController.stream;
 
   final StreamController<bool> _changeScreensController = BehaviorSubject();
 
-
   Stream<bool> get changeScreenStream => _changeScreensController.stream;
 
-  final _userDocument = FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid);
+  final _userDocument = FirebaseFirestore.instance
+      .collection('users')
+      .doc(FirebaseAuth.instance.currentUser!.uid);
 
   Stream<UserInformation> getSnapshot() {
     final String uid = FirebaseAuth.instance.currentUser!.uid;
@@ -34,9 +31,7 @@ class ChangeBloc {
         FirebaseFirestore.instance.collection('users').doc(uid).snapshots();
 
     return userStream.map((snapshot) {
-
-      return userProfile=UserInformation.fromJson(snapshot.data() ?? {});
-
+      return userProfile = UserInformation.fromJson(snapshot.data() ?? {});
     });
   }
 
@@ -46,9 +41,9 @@ class ChangeBloc {
 
   void push() {
     if (userProfile?.userPhoto == null) {
-      _imageFile='assets/images/koly.jpg';
+      _imageFile = 'assets/images/koly.jpg';
     } else {
-      _imageFile=userProfile?.userPhoto;
+      _imageFile = userProfile?.userPhoto;
     }
     if (userProfile?.userName == null) {
       nameController.text = '';
@@ -67,9 +62,12 @@ class ChangeBloc {
   }
 
   openGallery(BuildContext context) async {
-    _imageFile =
-        (await ImagePicker().pickImage(source: ImageSource.gallery))!.path;
-    if(_imageFile !=null){
+    _imageFile = (await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 50,
+    ))!
+        .path;
+    if (_imageFile != null) {
       _photoController.add(_imageFile!);
     }
 
@@ -108,7 +106,7 @@ class ChangeBloc {
     if (FirebaseAuth.instance.currentUser != null) {
       switchScreen = false;
       _changeScreensController.add(switchScreen);
-      _userDocument.update({'userNumber':phoneController.text});
+      _userDocument.update({'userNumber': phoneController.text});
       Navigator.of(context).pop();
     } else {
       print('user  is null');
@@ -162,8 +160,7 @@ class ChangeBloc {
   }
 
   void save(BuildContext context, String verificationId) {
-    if (userProfile?.userNumber !=
-        phoneController.text) {
+    if (userProfile?.userNumber != phoneController.text) {
       switchScreen = true;
       registerNewUser(context, verificationId);
     } else {
@@ -173,12 +170,11 @@ class ChangeBloc {
       _userDocument.update({'userName': nameController.text});
     }
     if (userProfile?.userPhoto != _imageFile!) {
-      _userDocument.update({'userPhoto':_imageFile});
-
+      _userDocument.update({'userPhoto': _imageFile});
     }
     userProfile!.userName = nameController.text;
     userProfile!.userNumber = phoneController.text;
-    userProfile!.userPhoto =_imageFile;
+    userProfile!.userPhoto = _imageFile;
 
     _changeScreensController.add(switchScreen);
   }

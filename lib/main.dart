@@ -1,10 +1,8 @@
-import 'package:audio_skazki/home_screen.dart';
 import 'package:audio_skazki/screens.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:io';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,7 +22,7 @@ class MyApp extends StatelessWidget {
       ),
       home: (FirebaseAuth.instance.currentUser == null)
           ? const Login()
-          :  const Screens(),
+          : const Screens(),
     );
   }
 }

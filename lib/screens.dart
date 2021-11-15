@@ -66,16 +66,17 @@ class Screens extends StatelessWidget {
                         ),
                         BottomNavigationBarItem(
                           icon: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF1B488),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: SvgPicture.asset(
-                                'assets/svg_files/voice.svg',
-                                fit: BoxFit.none,
-                              )),
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1B488),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: SvgPicture.asset(
+                              'assets/svg_files/voice.svg',
+                              fit: BoxFit.none,
+                            ),
+                          ),
                           label: 'Запись',
                         ),
                         BottomNavigationBarItem(
