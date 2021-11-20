@@ -1,6 +1,11 @@
+import 'package:audio_skazki/recording_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'change_audio_screens.dart';
+import 'change_screens.dart';
+import 'compilations_screen.dart';
+import 'home_screen.dart';
 import 'screens_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -18,6 +23,7 @@ class Screens extends StatelessWidget {
             stream: context.read<ScreensBloc>().stream,
             builder: (context, snapshot) {
               return Scaffold(
+                drawer: Drawer(),
                 extendBody: true,
                 bottomNavigationBar: Container(
                   decoration: const BoxDecoration(
@@ -101,13 +107,27 @@ class Screens extends StatelessWidget {
                     ),
                   ),
                 ),
-                body: context
-                    .read<ScreensBloc>()
-                    .screens
-                    .elementAt(snapshot.data!),
+                body: _getScreen(snapshot.data!),
               );
             });
       },
     );
+  }
+
+  Widget _getScreen(int index) {
+    switch (index) {
+      case 1:
+        return const CompilationsScreen();
+      case 2:
+        return const ChangeAudioScreens();
+      case 3:
+        return const Icon(
+          Icons.description,
+          size: 150,
+        );
+      case 4:
+        return const ChangeScreens();
+    }
+    return const HomeScreen();
   }
 }

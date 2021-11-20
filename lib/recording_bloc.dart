@@ -1,15 +1,21 @@
 import 'dart:async';
+import 'package:audio_skazki/screens.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'dart:ui';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:intl/date_symbol_data_local.dart';
-
+import 'package:share_plus/share_plus.dart';
 import 'audio_wave.dart';
+import 'package:path_provider/path_provider.dart';
 
-const pathAudio = 'sdcard/Download/audio.aac';
-const int duration = 42673;
+const pathAudio = 'sdcard/Download/audiooo.aac';
 
 class RecordingBloc {
   final Codec _codec = Codec.aacMP4;
@@ -20,19 +26,25 @@ class RecordingBloc {
   StreamSubscription? _playerSubscription;
   StreamSubscription? _recorderSubscription;
 
-  int pos = 0;
-  double maxDuration = 0.0;
+  double _maxDuration = 0.0;
   double _sliderCurrentPosition = 0.0;
   String _duration = '';
-  int waveDuration = 0;
-  double? dbLevel;
-  bool playerChange = true;
+  int _waveDuration = 0;
+  double? _dbLevel;
 
-  FlutterSoundRecorder? audioRecorder;
-  FlutterSoundPlayer? audioPlayer;
-  bool isRecorderInitialised = true;
+  FlutterSoundRecorder? _audioRecorder;
+  FlutterSoundPlayer? _audioPlayer;
+  bool _isRecorderInitialised = true;
 
-  List<AudioWaveBar> audioWaveBar = [];
+
+  BehaviorSubject<int> indexOfScreenController = BehaviorSubject();
+  Stream<int> get indexOfScreenStream =>
+  indexOfScreenController.stream;
+
+  TextEditingController audioNameController =
+      TextEditingController(text: 'Аудиозапись 1');
+
+  final List<AudioWaveBar> _audioWaveBar = [];
   BehaviorSubject<List<AudioWaveBar>> audioWaveBarController =
       BehaviorSubject();
 
@@ -90,10 +102,10 @@ class RecordingBloc {
   }
 
   void _addListeners() {
-    _playerSubscription = audioPlayer!.onProgress!.listen((e) {
-      maxDuration = e.duration.inMilliseconds.toDouble();
-      if (maxDuration <= 0) maxDuration = 0.0;
-      maxDurationController.add(maxDuration);
+    _playerSubscription = _audioPlayer!.onProgress!.listen((e) {
+      _maxDuration = e.duration.inMilliseconds.toDouble();
+      if (_maxDuration <= 0) _maxDuration = 0.0;
+      maxDurationController.add(_maxDuration);
       _sliderCurrentPosition = e.position.inMilliseconds.toDouble();
       if (_sliderCurrentPosition < 0.0) {
         _sliderCurrentPosition = 0.0;
@@ -109,8 +121,8 @@ class RecordingBloc {
   }
 
   Future init() async {
-    audioRecorder = FlutterSoundRecorder();
-    audioPlayer = FlutterSoundPlayer();
+    _audioRecorder = FlutterSoundRecorder();
+    _audioPlayer = FlutterSoundPlayer();
 
     initializeDateFormatting();
     final status = await Permission.microphone.request();
@@ -118,7 +130,7 @@ class RecordingBloc {
     if (status != PermissionStatus.granted) {
       throw RecordingPermissionException('Microphone permission');
     }
-    await audioRecorder!.openAudioSession(
+    await _audioRecorder!.openAudioSession(
       focus: AudioFocus.requestFocusAndStopOthers,
       category: SessionCategory.playAndRecord,
       mode: SessionMode.modeDefault,
@@ -127,56 +139,58 @@ class RecordingBloc {
 
     startRecording();
 
-    await audioPlayer!.openAudioSession(
+    await _audioPlayer!.openAudioSession(
       focus: AudioFocus.requestFocusAndStopOthers,
       category: SessionCategory.playAndRecord,
       mode: SessionMode.modeDefault,
       device: AudioDevice.speaker,
     );
 
-    await audioRecorder!
+    await _audioRecorder!
         .setSubscriptionDuration(const Duration(milliseconds: 10));
-    await audioPlayer!
+    await _audioPlayer!
         .setSubscriptionDuration(const Duration(milliseconds: 10));
   }
 
   Future rewind() async {
-    await audioPlayer!.seekToPlayer(
+    await _audioPlayer!.seekToPlayer(
         Duration(milliseconds: _sliderCurrentPosition.toInt() - 700));
     sliderCurrentPositionController.add(_sliderCurrentPosition);
   }
 
   Future fastForward() async {
-    await audioPlayer!.seekToPlayer(
+    await _audioPlayer!.seekToPlayer(
         Duration(milliseconds: _sliderCurrentPosition.toInt() + 700));
     sliderCurrentPositionController.add(_sliderCurrentPosition);
   }
 
   Future<void> getRecordingDuration() async {
-    _recorderSubscription = audioRecorder!.onProgress!.listen((e) {
-      waveDuration = e.duration.inMicroseconds;
+    _recorderSubscription = _audioRecorder!.onProgress!.listen((e) {
+      _waveDuration = e.duration.inMicroseconds;
       DateTime date = DateTime.fromMillisecondsSinceEpoch(
           e.duration.inMilliseconds,
           isUtc: true);
       String txt = DateFormat('mm:ss:SS', 'en_GB').format(date);
       _recorderTxt = txt.substring(0, 8);
       recorderTxtController.add(_recorderTxt);
-      waveDurationController.add(waveDuration);
+      waveDurationController.add(_waveDuration);
     });
   }
 
   Future<void> getAudioWaveBar() async {
-    _recorderSubscription = audioRecorder!.onProgress!.listen((e) {
+    _recorderSubscription = _audioRecorder!.onProgress!.listen((e) {
       double? value = e.decibels;
-      dbLevel = 70 * (value ?? 1) / 100;
-      audioWaveBar
-          .add(AudioWaveBar(height: dbLevel!, color: Color(0xFF4a4a97)));
-      audioWaveBarController.add(audioWaveBar);
+      _dbLevel = 70 * (value ?? 5) / 80;
+      if (_audioWaveBar.length>=100) _audioWaveBar.removeAt(0);
+      _audioWaveBar
+            .add(AudioWaveBar(height: _dbLevel!, color: Color(0xFF4a4a97)));
+        audioWaveBarController.add(_audioWaveBar);
+
     });
   }
 
   Future<void> getPlayerDuration() async {
-    _playerSubscription = audioRecorder!.onProgress!.listen((e) {
+    _playerSubscription = _audioRecorder!.onProgress!.listen((e) {
       DateTime date = DateTime.fromMillisecondsSinceEpoch(
           e.duration.inMilliseconds,
           isUtc: true);
@@ -188,11 +202,11 @@ class RecordingBloc {
 
   Future<void> seekToPlayer(int milliSec) async {
     try {
-      if (audioPlayer!.isPlaying) {
-        await audioPlayer!.seekToPlayer(Duration(milliseconds: milliSec));
+      if (_audioPlayer!.isPlaying) {
+        await _audioPlayer!.seekToPlayer(Duration(milliseconds: milliSec));
       }
     } on Exception catch (err) {
-      audioPlayer!.logger.e('error: $err');
+      _audioPlayer!.logger.e('error: $err');
     }
     _sliderCurrentPosition = milliSec.toDouble();
     sliderCurrentPositionController.add(_sliderCurrentPosition);
@@ -201,81 +215,140 @@ class RecordingBloc {
   Future startRecording() async {
     print('record');
 
-    await audioRecorder!.startRecorder(
+    await _audioRecorder!.startRecorder(
       toFile: pathAudio,
     );
-    audioPlayer!.stopPlayer();
+    _audioPlayer!.stopPlayer();
     await getRecordingDuration();
     await getAudioWaveBar();
     await getPlayerDuration();
 
-    isRecorderInitialised = false;
-    recorderController.add(isRecorderInitialised);
+    _isRecorderInitialised = false;
+    recorderController.add(_isRecorderInitialised);
   }
 
   Future stopRecording() async {
     print('stop');
-    await audioRecorder!.stopRecorder();
+    await _audioRecorder!.stopRecorder();
     _addListeners();
-    audioWaveBar.clear();
+    _audioWaveBar.clear();
     cancelRecorderSubscriptions();
-    isRecorderInitialised = true;
-    recorderController.add(isRecorderInitialised);
+    _isRecorderInitialised = true;
+    recorderController.add(_isRecorderInitialised);
   }
 
   Future startPlayer() async {
     try {
-      String? audioFilePath = 'sdcard/Download/audio.aac';
       Codec codec = _codec;
-      await audioPlayer!.startPlayer(
-          fromURI: audioFilePath,
+      await _audioPlayer!.startPlayer(
+          fromURI: pathAudio,
           codec: codec,
           whenFinished: () {
-            audioPlayer!.logger.d('Player finished');
+            _audioPlayer!.logger.d('Player finished');
           });
 
-      audioPlayer!.logger.d('<--- startPlayer');
+      _audioPlayer!.logger.d('<--- startPlayer');
     } on Exception catch (err) {
-      audioPlayer!.logger.e('error: $err');
+      _audioPlayer!.logger.e('error: $err');
     }
   }
 
   void pauseResumePlayer() async {
     try {
-      if (audioPlayer!.isPlaying) {
-        await audioPlayer!.pausePlayer();
+      if (_audioPlayer!.isPlaying) {
+        await _audioPlayer!.pausePlayer();
       } else {
-        await audioPlayer!.resumePlayer();
+        await _audioPlayer!.resumePlayer();
       }
     } on Exception catch (err) {
-      audioPlayer!.logger.e('error: $err');
+      _audioPlayer!.logger.e('error: $err');
     }
   }
 
   Future stopPlayer() async {
     print('stopPlayer');
-    await audioPlayer!.pausePlayer();
+    await _audioPlayer!.pausePlayer();
   }
 
   void Function()? onStopPlayerPressed() {
-    return (audioPlayer!.isPlaying) ? stopPlayer : null;
+    return (_audioPlayer!.isPlaying) ? stopPlayer : null;
   }
 
   void Function()? onStartPlayerPressed() {
-    return (audioPlayer!.isStopped) ? startPlayer : null;
+    return (_audioPlayer!.isStopped) ? startPlayer : null;
+  }
+
+
+
+  Future<void> shareAudio() async {
+    await Share.shareFiles([pathAudio]);
+  }
+
+  void uploadFile() => firebase_storage.FirebaseStorage.instance
+      .ref('audio/${audioNameController.text}')
+      .putFile(File(pathAudio));
+
+  Future<void> deleteAudio() async {
+    await _audioRecorder!.deleteRecord(fileName: pathAudio);
+    await _audioRecorder!.closeAudioSession();
+    await _audioPlayer!.closeAudioSession();
+  }
+
+  void showMaterialDialog(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Center(child: Text('Подтвреждаете удаление?')),
+            content: const Text(
+                'Ваш файл перенесется в папку\n "Недавно удаленные"\n Через 15 дней он исчезнет'),
+            actions: <Widget>[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                      onPressed: () {
+                        deleteAudio();
+                        Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const Screens()));
+                      },
+                      child: const Text('Да')),
+                  TextButton(
+                      onPressed: () {
+                        deleteAudio();
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Нет')),
+                ],
+              )
+            ],
+          );
+        });
+  }
+  void saveAndGoToEdit(){
+
+    indexOfScreenController.add(1);
+    print('save');
+  }
+  void backToPlayer(){
+
+    indexOfScreenController.add(0);
+    print('back');
   }
 
   void dispose() {
     cancelPlayerSubscriptions();
     cancelRecorderSubscriptions();
-    audioPlayer!.closeAudioSession();
-    audioPlayer = null;
-    audioRecorder!.closeAudioSession();
-    audioRecorder = null;
-    isRecorderInitialised = true;
+    _audioPlayer!.closeAudioSession();
+    _audioPlayer = null;
+    _audioRecorder!.closeAudioSession();
+    _audioRecorder = null;
+    _isRecorderInitialised = true;
     recorderController.close();
     audioWaveBarController.close();
     waveDurationController.close();
-    audioWaveBar = [];
+    _audioWaveBar.clear();
   }
 }

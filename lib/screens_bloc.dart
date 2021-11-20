@@ -14,15 +14,14 @@ import 'change_screens.dart';
 import 'home_screen.dart';
 
 class ScreensBloc {
-  final List<Widget> screens = <Widget>[
-    const HomeScreen(),
-    const CompilationsScreen(),
-    const RecordingScreen(),
-    const Icon(
-      Icons.description,
-      size: 150,
-    ),
-  const ChangeScreens(),
+
+
+  List<GlobalKey<NavigatorState>> navigatorKeys = [
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
   ];
 
 
@@ -36,7 +35,7 @@ class ScreensBloc {
   void onTaped(int index) {
 
     _selectedIndex = index;
-    _controller.add(index);
+    _controller.add(  _selectedIndex);
   }
 
   void dispose() {
