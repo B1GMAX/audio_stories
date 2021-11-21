@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:audio_skazki/screens.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'dart:ui';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
@@ -13,7 +12,7 @@ import 'package:intl/intl.dart' show DateFormat;
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:share_plus/share_plus.dart';
 import 'audio_wave.dart';
-import 'package:path_provider/path_provider.dart';
+
 
 const pathAudio = 'sdcard/Download/audiooo.aac';
 
@@ -238,7 +237,6 @@ class RecordingBloc {
   }
 
   Future startPlayer() async {
-    try {
       Codec codec = _codec;
       await _audioPlayer!.startPlayer(
           fromURI: pathAudio,
@@ -248,9 +246,7 @@ class RecordingBloc {
           });
 
       _audioPlayer!.logger.d('<--- startPlayer');
-    } on Exception catch (err) {
-      _audioPlayer!.logger.e('error: $err');
-    }
+
   }
 
   void pauseResumePlayer() async {
@@ -327,13 +323,23 @@ class RecordingBloc {
           );
         });
   }
-  void saveAndGoToEdit(){
-
+  void save(){
+    cancelPlayerSubscriptions();
+    cancelRecorderSubscriptions();
+    _audioPlayer!.closeAudioSession();
+    _audioPlayer = null;
+    _audioRecorder!.closeAudioSession();
+    _audioRecorder = null;
+    _isRecorderInitialised = true;
+    recorderController.close();
+    audioWaveBarController.close();
+    waveDurationController.close();
+    _audioWaveBar.clear();
     indexOfScreenController.add(1);
     print('save');
   }
-  void backToPlayer(){
 
+  void onPlayerScreenClose(){
     indexOfScreenController.add(0);
     print('back');
   }

@@ -30,19 +30,19 @@ class RecordingScreen extends StatelessWidget {
                   color: Colors.deepPurple,
                 ),
               ),
-              // Positioned(
-              //   child: IconButton(
-              //     onPressed: () {
-              //       _scaffoldKey.currentState!.openDrawer();
-              //     },
-              //     icon: const Icon(
-              //       Icons.menu,
-              //       color: Colors.white,
-              //     ),
-              //   ),
-              //   left: 4,
-              //   top: kToolbarHeight * 0.59,
-              // ),
+              Positioned(
+                child: IconButton(
+                  onPressed: () {
+                    _scaffoldKey.currentState!.openDrawer();
+                  },
+                  icon: const Icon(
+                    Icons.menu,
+                    color: Colors.white,
+                  ),
+                ),
+                left: 4,
+                top: kToolbarHeight * 0.59,
+              ),
               Padding(
                 padding: const EdgeInsets.only(right: 10, left: 10),
                 child: DraggableScrollableSheet(
@@ -110,7 +110,7 @@ class RecordingScreen extends StatelessWidget {
                                         ),
                                         onTap: context
                                             .read<RecordingBloc>()
-                                            .saveAndGoToEdit),
+                                            .save),
                                   ],
                                 ),
                               ),

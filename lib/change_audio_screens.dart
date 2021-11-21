@@ -3,7 +3,7 @@ import 'package:audio_skazki/recording_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
-import 'edit_audio_screen.dart';
+import 'player_screen.dart';
 
 class ChangeAudioScreens extends StatelessWidget {
   const ChangeAudioScreens({Key? key}) : super(key: key);
@@ -20,9 +20,9 @@ class ChangeAudioScreens extends StatelessWidget {
             print('${snapshot.data}');
             return IndexedStack(
               index: snapshot.data!,
-              children: const [
-                RecordingScreen(),
-                EditAudioScreen(),
+              children:  [
+                const RecordingScreen(),
+                PlayerScreen(onClose: context.read<RecordingBloc>().onPlayerScreenClose,),
               ],
             );
           },
