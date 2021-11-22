@@ -1,9 +1,13 @@
+import 'package:audio_skazki/player_information.dart';
+import 'package:audio_skazki/user_information.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:rxdart/rxdart.dart';
 import 'dart:async';
 import 'package:intl/intl.dart' show DateFormat;
+import 'package:image_picker/image_picker.dart';
 
 const pathAudio = 'sdcard/Download/audiooo.aac';
 
@@ -16,6 +20,15 @@ class PlayerBloc {
   String _playerTxt = '00:00:00';
   double _sliderCurrentPosition = 0.0;
   String _duration = '';
+
+  BehaviorSubject<PlayerInformation>playerInformationController = BehaviorSubject();
+  Stream<PlayerInformation> get playerInformationStream =>
+      playerInformationController.stream;
+
+
+  BehaviorSubject<int> indexOfPlayerScreenController = BehaviorSubject();
+  Stream<int> get indexOfPlayerScreenStream =>
+      indexOfPlayerScreenController.stream;
 
   BehaviorSubject<String> durationController = BehaviorSubject();
 
@@ -137,4 +150,87 @@ class PlayerBloc {
     sliderCurrentPositionController.add(_sliderCurrentPosition);
   }
 
+  void onSelected(BuildContext context, int item){
+    switch(item){
+      case 1:
+        edit();
+        break;
+    }
+  }
+ final PlayerInformation? playerInformation=PlayerInformation();
+
+  String? _imageFile;
+  final StreamController<String> _playerPhotoController = BehaviorSubject();
+
+  Stream<String> get playerPhotoStream => _playerPhotoController.stream;
+
+
+  openGallery(BuildContext context) async {
+    _imageFile = (await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 50,
+    ))!
+        .path;
+    if (_imageFile != null) {
+      _playerPhotoController.add(_imageFile!);
+    }
+
+    Navigator.of(context).pop();
+  }
+  Future<void> showChoiceDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    openGallery(context);
+                  },
+                  child: const Text('Gallery'),
+                )
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+  void cancel(){
+    indexOfPlayerScreenController.add(0);
+    print('cancel');
+  }
+  void ready(){
+    if (playerInformation?.playerName != audioPlayerNameController.text) {
+      indexOfPlayerScreenController.add(0);
+      print(audioPlayerNameController.text);
+    }
+
+    if (playerInformation?.playerPhoto != _imageFile!) {
+      indexOfPlayerScreenController.add(0);
+    }
+
+    playerInformation?.playerName = audioPlayerNameController.text;
+    playerInformation?.playerPhoto = _imageFile;
+    playerInformationController.add(playerInformation!);
+    print(playerInformation?.playerName);
+    print('ready');
+  }
+  void edit(){
+    if (playerInformation?.playerPhoto == null) {
+      _imageFile = 'assets/images/koly.jpg';
+    } else {
+      _imageFile = playerInformation?.playerPhoto;
+    }
+    if (playerInformation?.playerName == null) {
+      audioPlayerNameController.text = '';
+    } else {
+      audioPlayerNameController.text = playerInformation!.playerName!;
+    }
+    _playerPhotoController.add(_imageFile!);
+    indexOfPlayerScreenController.add(1);
+    print('edit');
+  }
 }

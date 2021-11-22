@@ -2,6 +2,7 @@ import 'package:audio_skazki/recording_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'audio_recordings.dart';
 import 'change_audio_screens.dart';
 import 'change_screens.dart';
 import 'compilations_screen.dart';
@@ -121,10 +122,7 @@ class Screens extends StatelessWidget {
       case 2:
         return const ChangeAudioScreens();
       case 3:
-        return const Icon(
-          Icons.description,
-          size: 150,
-        );
+        return const AudioRecordings();
       case 4:
         return const ChangeScreens();
     }

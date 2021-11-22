@@ -324,17 +324,7 @@ class RecordingBloc {
         });
   }
   void save(){
-    cancelPlayerSubscriptions();
-    cancelRecorderSubscriptions();
-    _audioPlayer!.closeAudioSession();
-    _audioPlayer = null;
-    _audioRecorder!.closeAudioSession();
-    _audioRecorder = null;
-    _isRecorderInitialised = true;
-    recorderController.close();
-    audioWaveBarController.close();
-    waveDurationController.close();
-    _audioWaveBar.clear();
+
     indexOfScreenController.add(1);
     print('save');
   }

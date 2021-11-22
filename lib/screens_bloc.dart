@@ -15,16 +15,6 @@ import 'home_screen.dart';
 
 class ScreensBloc {
 
-
-  List<GlobalKey<NavigatorState>> navigatorKeys = [
-    GlobalKey<NavigatorState>(),
-    GlobalKey<NavigatorState>(),
-    GlobalKey<NavigatorState>(),
-    GlobalKey<NavigatorState>(),
-    GlobalKey<NavigatorState>(),
-  ];
-
-
   final StreamController<int> _controller = StreamController<int>();
 
   Stream<int> get stream => _controller.stream;

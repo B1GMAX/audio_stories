@@ -1,10 +1,12 @@
 import 'package:audio_skazki/player_bloc.dart';
+import 'package:audio_skazki/player_information.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'custom_cliper.dart';
 import 'custom_slider.dart';
+import 'dart:io';
 import 'package:provider/src/provider.dart';
 
 class PlayerScreen extends StatelessWidget {
@@ -17,63 +19,100 @@ class PlayerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     double height = MediaQuery.of(context).size.height;
-    return Provider<PlayerBloc>(
-      create: (BuildContext context) => PlayerBloc()..playerInit(),
-      builder: (context, _) {
-        return Stack(
-          children: [
-            ClipPath(
-              clipper: MyCustomClipper(),
-              child: Container(
-                height: height * 0.6,
-                color: Colors.deepPurple,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(right: 10, left: 10),
-              child: DraggableScrollableSheet(
-                  initialChildSize: 0.92,
-                  builder: (context, controller) {
-                    return SingleChildScrollView(
-                      child: Container(
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.only(
-                              topRight: Radius.circular(20),
-                              topLeft: Radius.circular(20),
-                            ),
-                          ),
-                          child: Column(
+    return Stack(
+      children: [
+        ClipPath(
+          clipper: MyCustomClipper(),
+          child: Container(
+            height: height * 0.6,
+            color: Colors.deepPurple,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 10, left: 10),
+          child: DraggableScrollableSheet(
+              initialChildSize: 0.92,
+              builder: (context, controller) {
+                return SingleChildScrollView(
+                  child: Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topRight: Radius.circular(20),
+                          topLeft: Radius.circular(20),
+                        ),
+                      ),
+                      child: StreamBuilder<PlayerInformation>(
+                        initialData:  context.read<PlayerBloc>().playerInformation,
+                        stream: context.read<PlayerBloc>().playerInformationStream,
+                        builder: (context, snapshot) {
+                          return Column(
                             children: [
-                              GestureDetector(
-                                child: const Icon(Icons.arrow_back_sharp),
-                                onTap: onClose,
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    top: 15, left: 30, bottom: 20),
+                                child: Row(
+                                  children: [
+                                    GestureDetector(
+                                      child: SvgPicture.asset(
+                                        'assets/svg_files/arrow_circle.svg',
+                                        color: const Color(0xFF4a4a97),
+                                      ),
+                                      onTap: onClose,
+                                    ),
+                                    const SizedBox(
+                                      width: 250,
+                                    ),
+                                    PopupMenuButton<int>(
+                                        icon: SvgPicture.asset(
+                                          'assets/svg_files/drop_menu.svg',
+                                          color: const Color(0xFF4a4a97),
+                                        ),
+                                        onSelected: (item) => context
+                                            .read<PlayerBloc>()
+                                            .onSelected(context, item),
+                                        itemBuilder: (context) =>const [
+                                              PopupMenuItem<int>(
+                                                  child:
+                                                      Text('Добавить в подборку'),
+                                              value: 0,),
+                                              PopupMenuItem<int>(
+                                                  child: Text('Редактировать'),
+                                              value: 1,),
+                                              PopupMenuItem<int>(
+                                                  child: Text('Поделиться'),
+                                              value: 2,),
+                                              PopupMenuItem<int>(
+                                                  child: Text('Скачть'),
+                                              value: 3,),
+                                              PopupMenuItem<int>(
+                                                  child: Text('Удалить'),
+                                              value: 4,),
+                                            ])
+                                  ],
+                                ),
                               ),
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(30),
-                                child: Image.asset(
-                                  'assets/images/koly.jpg',
-                                  width: 300,
-                                  height: 320,
+                                child: snapshot.data?.playerPhoto == null
+                                    ? Container(
+                                  width: 230,
+                                  height: 240,
+                                  color: Colors.white.withOpacity(0.2),
+                                )
+                                    : Image.file(
+                                  File(snapshot.data!.playerPhoto!),
+                                  width: 230,
+                                  height: 240,
                                   fit: BoxFit.fill,
                                 ),
                               ),
                               Padding(
                                   padding: const EdgeInsets.only(
                                       top: 40, bottom: 13, left: 50, right: 50),
-                                  child: TextField(
-                                    decoration: const InputDecoration(
-                                      enabledBorder: InputBorder.none,
-                                    ),
-                                    style: const TextStyle(
-                                        color: Color(0xFF4a4a97),
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 25),
-                                    textAlign: TextAlign.center,
-                                    controller: context
-                                        .read<PlayerBloc>()
-                                        .audioPlayerNameController,
-                                  )),
+                                  child: Text( snapshot.data?.playerName == null
+                                      ? 'Коля'
+                                      : snapshot.data!.playerName!,)),
                               StreamBuilder<double>(
                                   initialData: 0.0,
                                   stream: context
@@ -89,23 +128,20 @@ class PlayerScreen extends StatelessWidget {
                                             (context, snapshotCurrentPosition) {
                                           return SliderTheme(
                                             data: const SliderThemeData(
-                                              activeTrackColor:
-                                                  Color(0xFF4a4a97),
-                                              inactiveTrackColor:
-                                                  Color(0xFF4a4a97),
+                                              activeTrackColor: Color(0xFF4a4a97),
+                                              inactiveTrackColor: Color(0xFF4a4a97),
                                               thumbShape:
                                                   CustomSlider(thumbRadius: 7),
                                             ),
                                             child: Slider(
                                                 min: 0.0,
                                                 max: snapshotDuration.data!,
-                                                value: snapshotCurrentPosition
-                                                    .data!,
+                                                value:
+                                                    snapshotCurrentPosition.data!,
                                                 onChanged: (value) {
                                                   context
                                                       .read<PlayerBloc>()
-                                                      .seekToPlayer(
-                                                          value.toInt());
+                                                      .seekToPlayer(value.toInt());
                                                 }),
                                           );
                                         });
@@ -113,8 +149,8 @@ class PlayerScreen extends StatelessWidget {
                               Row(
                                 children: [
                                   Padding(
-                                    padding: const EdgeInsets.only(
-                                        right: 265, left: 25),
+                                    padding:
+                                        const EdgeInsets.only(right: 265, left: 25),
                                     child: StreamBuilder<String>(
                                         initialData: '00:00',
                                         stream: context
@@ -131,9 +167,8 @@ class PlayerScreen extends StatelessWidget {
                                   ),
                                   StreamBuilder<String>(
                                       initialData: '00:00',
-                                      stream: context
-                                          .read<PlayerBloc>()
-                                          .durationStream,
+                                      stream:
+                                          context.read<PlayerBloc>().durationStream,
                                       builder: (context, snapshot) {
                                         return Text(
                                           snapshot.data!,
@@ -146,7 +181,7 @@ class PlayerScreen extends StatelessWidget {
                               ),
                               Padding(
                                 padding:
-                                    const EdgeInsets.only(top: 50, bottom: 100),
+                                    const EdgeInsets.only(top: 50, bottom: 150),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -194,9 +229,7 @@ class PlayerScreen extends StatelessWidget {
                                       width: 50,
                                     ),
                                     GestureDetector(
-                                      onTap: context
-                                          .read<PlayerBloc>()
-                                          .fastForward,
+                                      onTap: context.read<PlayerBloc>().fastForward,
                                       child: SvgPicture.asset(
                                         'assets/svg_files/fast_forward.svg',
                                         color: const Color(0xFF4a4a97),
@@ -206,13 +239,13 @@ class PlayerScreen extends StatelessWidget {
                                 ),
                               ),
                             ],
-                          )),
-                    );
-                  }),
-            )
-          ],
-        );
-      },
+                          );
+                        }
+                      )),
+                );
+              }),
+        )
+      ],
     );
   }
 }

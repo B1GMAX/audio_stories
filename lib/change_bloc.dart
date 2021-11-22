@@ -183,6 +183,15 @@ class ChangeBloc {
     switchScreen = false;
     _changeScreensController.add(switchScreen);
   }
+ Future <void> deleteUser()async{
+    try {
+      await FirebaseAuth.instance.currentUser!.delete();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        print('The user must reauthenticate before this operation can be executed.');
+      }
+    }
+  }
 
   void dispose() {
     _changeScreensController.close();

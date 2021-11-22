@@ -155,7 +155,7 @@ class UserProfileScreen extends StatelessWidget {
                                 style: TextStyle(color: Colors.black),
                               )),
                           TextButton(
-                              onPressed: () {},
+                              onPressed: context.read<ChangeBloc>().deleteUser,
                               child: const Text(
                                 'Удалить аккаунт',
                                 style: TextStyle(color: Colors.red),

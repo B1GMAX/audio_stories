@@ -3,7 +3,8 @@ import 'package:audio_skazki/recording_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
-import 'player_screen.dart';
+import 'change_player_screens.dart';
+
 
 class ChangeAudioScreens extends StatelessWidget {
   const ChangeAudioScreens({Key? key}) : super(key: key);
@@ -22,7 +23,7 @@ class ChangeAudioScreens extends StatelessWidget {
               index: snapshot.data!,
               children:  [
                 const RecordingScreen(),
-                PlayerScreen(onClose: context.read<RecordingBloc>().onPlayerScreenClose,),
+                ChangePlayerScreens(onClose: context.read<RecordingBloc>().onPlayerScreenClose,),
               ],
             );
           },

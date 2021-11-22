@@ -89,6 +89,8 @@ flutter:
     - assets/svg_files/paper_download.svg
     - assets/svg_files/fast_forward.svg
     - assets/svg_files/rewind.svg
+    - assets/svg_files/drop_menu.svg
+    - assets/svg_files/arrow_circle.svg
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
