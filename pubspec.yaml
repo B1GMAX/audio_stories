@@ -79,6 +79,7 @@ flutter:
   assets:
     - assets/images/ogr.jpg
     - assets/images/koly.jpg
+    - assets/images/goru.jpg
     - assets/svg_files/category.svg
     - assets/svg_files/home.svg
     - assets/svg_files/paper.svg

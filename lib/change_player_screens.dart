@@ -5,12 +5,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
 class ChangePlayerScreens extends StatelessWidget {
-  const ChangePlayerScreens({Key? key, required this.onClose}) : super(key: key);
+  const ChangePlayerScreens({Key? key, required this.onClose, required this.audioName}) : super(key: key);
   final VoidCallback onClose;
+  final String audioName;
   @override
   Widget build(BuildContext context) {
     return Provider<PlayerBloc>(
-      create: (BuildContext context) => PlayerBloc()..playerInit(),
+      create: (BuildContext context) => PlayerBloc(audioName: audioName)..playerInit(),
       builder: (context, _) {
         return StreamBuilder<int>(
           initialData: 0,

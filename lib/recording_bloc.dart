@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:audio_skazki/screens.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -12,12 +13,18 @@ import 'package:intl/intl.dart' show DateFormat;
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:share_plus/share_plus.dart';
 import 'audio_wave.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:path_provider/path_provider.dart';
 
-
-const pathAudio = 'sdcard/Download/audiooo.aac';
+const pathAudio = 'sdcard/Download/';
 
 class RecordingBloc {
-  final Codec _codec = Codec.aacMP4;
+  RecordingBloc() {
+    getApplicationDocumentsDirectory().then((value) => _appDocDir = value);
+  }
+
+  final Codec _codec = Codec.aacADTS;
+  late final Directory _appDocDir;
 
   String _playerTxt = '00:00:00';
   String _recorderTxt = '00:00:00';
@@ -30,18 +37,17 @@ class RecordingBloc {
   String _duration = '';
   int _waveDuration = 0;
   double? _dbLevel;
-
+  String _audioInitialText = 'Аудиозапись';
   FlutterSoundRecorder? _audioRecorder;
   FlutterSoundPlayer? _audioPlayer;
   bool _isRecorderInitialised = true;
 
-
   BehaviorSubject<int> indexOfScreenController = BehaviorSubject();
-  Stream<int> get indexOfScreenStream =>
-  indexOfScreenController.stream;
+
+  Stream<int> get indexOfScreenStream => indexOfScreenController.stream;
 
   TextEditingController audioNameController =
-      TextEditingController(text: 'Аудиозапись 1');
+      TextEditingController(text: 'Аудиозапись');
 
   final List<AudioWaveBar> _audioWaveBar = [];
   BehaviorSubject<List<AudioWaveBar>> audioWaveBarController =
@@ -136,7 +142,7 @@ class RecordingBloc {
       device: AudioDevice.speaker,
     );
 
-    startRecording();
+    await startRecording();
 
     await _audioPlayer!.openAudioSession(
       focus: AudioFocus.requestFocusAndStopOthers,
@@ -180,11 +186,10 @@ class RecordingBloc {
     _recorderSubscription = _audioRecorder!.onProgress!.listen((e) {
       double? value = e.decibels;
       _dbLevel = 70 * (value ?? 5) / 80;
-      if (_audioWaveBar.length>=100) _audioWaveBar.removeAt(0);
+      if (_audioWaveBar.length >= 100) _audioWaveBar.removeAt(0);
       _audioWaveBar
-            .add(AudioWaveBar(height: _dbLevel!, color: Color(0xFF4a4a97)));
-        audioWaveBarController.add(_audioWaveBar);
-
+          .add(AudioWaveBar(height: _dbLevel!, color: Color(0xFF4a4a97)));
+      audioWaveBarController.add(_audioWaveBar);
     });
   }
 
@@ -211,14 +216,14 @@ class RecordingBloc {
     sliderCurrentPositionController.add(_sliderCurrentPosition);
   }
 
-  Future startRecording() async {
-    print('record');
-
+  Future<void> startRecording() async {
     await _audioRecorder!.startRecorder(
-      toFile: pathAudio,
+      codec: _codec,
+      toFile: '${_appDocDir.path}/$_audioInitialText.aac',
     );
+    print('record');
     _audioPlayer!.stopPlayer();
-    await getRecordingDuration();
+    getRecordingDuration();
     await getAudioWaveBar();
     await getPlayerDuration();
 
@@ -226,7 +231,7 @@ class RecordingBloc {
     recorderController.add(_isRecorderInitialised);
   }
 
-  Future stopRecording() async {
+  Future<void> stopRecording() async {
     print('stop');
     await _audioRecorder!.stopRecorder();
     _addListeners();
@@ -236,17 +241,15 @@ class RecordingBloc {
     recorderController.add(_isRecorderInitialised);
   }
 
-  Future startPlayer() async {
-      Codec codec = _codec;
-      await _audioPlayer!.startPlayer(
-          fromURI: pathAudio,
-          codec: codec,
-          whenFinished: () {
-            _audioPlayer!.logger.d('Player finished');
-          });
+  Future<void> startPlayer() async {
+    await _audioPlayer!.startPlayer(
+        codec: _codec,
+        fromURI: '${_appDocDir.path}/$_audioInitialText.aac',
+        whenFinished: () {
+          _audioPlayer!.logger.d('Player finished');
+        });
 
-      _audioPlayer!.logger.d('<--- startPlayer');
-
+    _audioPlayer!.logger.d('<--- startPlayer');
   }
 
   void pauseResumePlayer() async {
@@ -274,15 +277,22 @@ class RecordingBloc {
     return (_audioPlayer!.isStopped) ? startPlayer : null;
   }
 
-
-
   Future<void> shareAudio() async {
-    await Share.shareFiles([pathAudio]);
+    Directory appDocDir = await getApplicationDocumentsDirectory();
+    await Share.shareFiles(['${appDocDir.path}/$_audioInitialText.aac']);
   }
 
-  void uploadFile() => firebase_storage.FirebaseStorage.instance
-      .ref('audio/${audioNameController.text}')
-      .putFile(File(pathAudio));
+  final _audioDocument = FirebaseFirestore.instance
+      .collection('users')
+      .doc(FirebaseAuth.instance.currentUser!.uid)
+      .collection('filedata')
+      .doc();
+
+  void uploadFile() {
+    firebase_storage.FirebaseStorage.instance
+        .ref('audio/${audioNameController.text}')
+        .putFile(File(pathAudio + '${audioNameController.text}.aac'));
+  }
 
   Future<void> deleteAudio() async {
     await _audioRecorder!.deleteRecord(fileName: pathAudio);
@@ -323,13 +333,32 @@ class RecordingBloc {
           );
         });
   }
-  void save(){
 
+  Future<void> save() async {
+    if (audioNameController.text != _audioInitialText) {
+      File('${_appDocDir.path}/$_audioInitialText.aac')
+          .renameSync('${_appDocDir.path}/${audioNameController.text}.aac');
+    }
+    final oldFileName = _audioInitialText;
+    if (audioNameController.text == _audioInitialText) {
+      _audioInitialText += DateTime.now().toString().substring(0, 16);
+      audioNameController.text = _audioInitialText;
+      print(
+          'file- ${File('${_appDocDir.path}/$oldFileName.aac').existsSync()}');
+      File('${_appDocDir.path}/$oldFileName.aac')
+          .renameSync('${_appDocDir.path}/${audioNameController.text}.aac');
+    }
+
+    _audioDocument
+        .set({'audioName': audioNameController.text}, SetOptions(merge: true));
+    firebase_storage.FirebaseStorage.instance
+        .ref('audio/${audioNameController.text}')
+        .putFile(File('${_appDocDir.path}/${audioNameController.text}.aac'));
     indexOfScreenController.add(1);
     print('save');
   }
 
-  void onPlayerScreenClose(){
+  void onPlayerScreenClose() {
     indexOfScreenController.add(0);
     print('back');
   }

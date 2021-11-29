@@ -82,10 +82,10 @@ class EditPlayer extends StatelessWidget {
                                           .showChoiceDialog(context);
                                     },
                                     child: snapshot.data == null
-                                        ? Container(
+                                        ? Image.asset('assets/images/goru.jpg',
                                       width: 230,
                                       height: 240,
-                                      color: Colors.white.withOpacity(0.2),
+                                      fit: BoxFit.fill,
                                     )
                                         : Image.file(
                                       File(snapshot.data!),

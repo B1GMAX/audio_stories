@@ -1,5 +1,5 @@
 import 'package:audio_skazki/player_bloc.dart';
-import 'package:audio_skazki/player_information.dart';
+import 'package:audio_skazki/audio_information.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -42,7 +42,7 @@ class PlayerScreen extends StatelessWidget {
                           topLeft: Radius.circular(20),
                         ),
                       ),
-                      child: StreamBuilder<PlayerInformation>(
+                      child: StreamBuilder<AudiInformation>(
                         initialData:  context.read<PlayerBloc>().playerInformation,
                         stream: context.read<PlayerBloc>().playerInformationStream,
                         builder: (context, snapshot) {
@@ -94,14 +94,14 @@ class PlayerScreen extends StatelessWidget {
                               ),
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(30),
-                                child: snapshot.data?.playerPhoto == null
-                                    ? Container(
-                                  width: 230,
-                                  height: 240,
-                                  color: Colors.white.withOpacity(0.2),
+                                child: snapshot.data?.audioPhoto == null
+                                    ? Image.asset('assets/images/goru.jpg',
+                                  width: 320,
+                                  height: 300,
+                                  fit: BoxFit.fill,
                                 )
                                     : Image.file(
-                                  File(snapshot.data!.playerPhoto!),
+                                  File(snapshot.data!.audioPhoto!),
                                   width: 230,
                                   height: 240,
                                   fit: BoxFit.fill,
@@ -110,9 +110,9 @@ class PlayerScreen extends StatelessWidget {
                               Padding(
                                   padding: const EdgeInsets.only(
                                       top: 40, bottom: 13, left: 50, right: 50),
-                                  child: Text( snapshot.data?.playerName == null
-                                      ? 'Коля'
-                                      : snapshot.data!.playerName!,)),
+                                  child: Text( snapshot.data?.audioName == null
+                                      ? 'Аудиозапись 1'
+                                      : snapshot.data!.audioName!,)),
                               StreamBuilder<double>(
                                   initialData: 0.0,
                                   stream: context

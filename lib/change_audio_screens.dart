@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 
 import 'change_player_screens.dart';
 
-
 class ChangeAudioScreens extends StatelessWidget {
   const ChangeAudioScreens({Key? key}) : super(key: key);
 
@@ -21,9 +20,13 @@ class ChangeAudioScreens extends StatelessWidget {
             print('${snapshot.data}');
             return IndexedStack(
               index: snapshot.data!,
-              children:  [
+              children: [
                 const RecordingScreen(),
-                ChangePlayerScreens(onClose: context.read<RecordingBloc>().onPlayerScreenClose,),
+                ChangePlayerScreens(
+                  onClose: context.read<RecordingBloc>().onPlayerScreenClose,
+                  audioName:
+                      context.read<RecordingBloc>().audioNameController.text,
+                ),
               ],
             );
           },
@@ -32,4 +35,3 @@ class ChangeAudioScreens extends StatelessWidget {
     );
   }
 }
-

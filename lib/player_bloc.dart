@@ -1,4 +1,7 @@
-import 'package:audio_skazki/player_information.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:audio_skazki/audio_information.dart';
+import 'package:audio_skazki/recording_bloc.dart';
 import 'package:audio_skazki/user_information.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,20 +12,28 @@ import 'dart:async';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:image_picker/image_picker.dart';
 
-const pathAudio = 'sdcard/Download/audiooo.aac';
+
 
 class PlayerBloc {
+
+  final String audioName;
+  PlayerBloc({required this.audioName}){
+    getApplicationDocumentsDirectory().then((value) =>_appDocDir=value);
+  }
+
+
+  final Codec _codec = Codec.aacADTS;
+  late final Directory _appDocDir;
   StreamSubscription? _playerSubscription;
   bool isPlaying = true;
   double _maxPlayerDuration = 0.0;
-  final Codec _codec = Codec.aacMP4;
   FlutterSoundPlayer? _audioPlayer;
   String _playerTxt = '00:00:00';
   double _sliderCurrentPosition = 0.0;
   String _duration = '';
 
-  BehaviorSubject<PlayerInformation>playerInformationController = BehaviorSubject();
-  Stream<PlayerInformation> get playerInformationStream =>
+  BehaviorSubject<AudiInformation>playerInformationController = BehaviorSubject();
+  Stream<AudiInformation> get playerInformationStream =>
       playerInformationController.stream;
 
 
@@ -35,7 +46,7 @@ class PlayerBloc {
   Stream<String> get durationStream => durationController.stream;
 
   TextEditingController audioPlayerNameController =
-      TextEditingController(text: 'Аудиозапись 1');
+      TextEditingController();
 
   BehaviorSubject<bool> isPlayingController = BehaviorSubject();
 
@@ -104,10 +115,8 @@ class PlayerBloc {
   }
 
   Future startPlayer() async {
-    Codec codec=_codec;
     await _audioPlayer!.startPlayer(
-        fromURI: pathAudio,
-        codec: codec,
+        fromURI: '${_appDocDir.path}/$audioName.aac',
         whenFinished: () {
           isPlaying = true;
           isPlayingController.add(isPlaying);
@@ -157,7 +166,7 @@ class PlayerBloc {
         break;
     }
   }
- final PlayerInformation? playerInformation=PlayerInformation();
+ final AudiInformation? playerInformation=AudiInformation();
 
   String? _imageFile;
   final StreamController<String> _playerPhotoController = BehaviorSubject();
@@ -203,31 +212,31 @@ class PlayerBloc {
     print('cancel');
   }
   void ready(){
-    if (playerInformation?.playerName != audioPlayerNameController.text) {
+    if (playerInformation?.audioName != audioPlayerNameController.text) {
       indexOfPlayerScreenController.add(0);
       print(audioPlayerNameController.text);
     }
 
-    if (playerInformation?.playerPhoto != _imageFile!) {
+    if (playerInformation?.audioPhoto != _imageFile!) {
       indexOfPlayerScreenController.add(0);
     }
 
-    playerInformation?.playerName = audioPlayerNameController.text;
-    playerInformation?.playerPhoto = _imageFile;
+    playerInformation?.audioName = audioPlayerNameController.text;
+    playerInformation?.audioPhoto = _imageFile;
     playerInformationController.add(playerInformation!);
-    print(playerInformation?.playerName);
+    print(playerInformation?.audioName);
     print('ready');
   }
   void edit(){
-    if (playerInformation?.playerPhoto == null) {
-      _imageFile = 'assets/images/koly.jpg';
+    if (playerInformation?.audioPhoto == null) {
+      _imageFile = 'assets/images/goru.jpg';
     } else {
-      _imageFile = playerInformation?.playerPhoto;
+      _imageFile = playerInformation?.audioPhoto;
     }
-    if (playerInformation?.playerName == null) {
+    if (playerInformation?.audioName == null) {
       audioPlayerNameController.text = '';
     } else {
-      audioPlayerNameController.text = playerInformation!.playerName!;
+      audioPlayerNameController.text = playerInformation!.audioName!;
     }
     _playerPhotoController.add(_imageFile!);
     indexOfPlayerScreenController.add(1);

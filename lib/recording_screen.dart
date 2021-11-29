@@ -83,9 +83,7 @@ class RecordingScreen extends StatelessWidget {
                                           'assets/svg_files/paper_download.svg',
                                           color: const Color(0xFF4a4a97),
                                         ),
-                                        onTap: context
-                                            .read<RecordingBloc>()
-                                            .uploadFile),
+                                        onTap: context.read<RecordingBloc>().uploadFile),
                                     GestureDetector(
                                       child: SvgPicture.asset(
                                         'assets/svg_files/delete.svg',

@@ -76,15 +76,18 @@ class _AudioWaveState extends State<AudioWave> {
 
       WidgetsBinding.instance?.addPostFrameCallback((x) {
         Timer.periodic(widget.beatRate, (timer) {
-          int mo = countBeat % widget.bars.length;
-
-          bars = List.from(widget.bars.getRange(0, mo + 1));
-          if (mounted) setState(() {});
-          countBeat++;
-
-          if (widget.animationLoop > 0 &&
-              widget.animationLoop <= (countBeat / widget.bars.length)) {
+          if(widget.bars.isEmpty){
             timer.cancel();
+          }else{
+            int mo = countBeat % widget.bars.length;
+            bars = List.from(widget.bars.getRange(0, mo + 1));
+            if (mounted) setState(() {});
+            countBeat++;
+
+            if (widget.animationLoop > 0 &&
+                widget.animationLoop <= (countBeat / widget.bars.length)) {
+              timer.cancel();
+            }
           }
         });
       });

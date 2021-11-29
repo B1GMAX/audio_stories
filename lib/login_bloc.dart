@@ -15,7 +15,7 @@ class LoginBloc {
 
   Future<void> registerUser(BuildContext context) async {
     _auth.verifyPhoneNumber(
-      phoneNumber: '+12345678911',
+      phoneNumber: phoneNumberTextController.text,
       verificationCompleted: (PhoneAuthCredential credential) async {
         print('verificationCompleted');
       },
@@ -28,7 +28,7 @@ class LoginBloc {
             MaterialPageRoute(
                 builder: (context) => CodeScreen(
                       verificationId: verificationId,
-                      mobileNumber: '+12345678911',
+                      mobileNumber:  phoneNumberTextController.text,
                     )),
             (route) => true);
       },
